@@ -7,9 +7,10 @@
 #include <linux/poll.h>
 #include <linux/videodev2.h>
 #include "zynq_v4l2.h"
+#include <linux/slab.h>
 
 MODULE_DESCRIPTION("ZYNQ v4l2 device driver");
-MODULE_AUTHOR("takashi.osawa");
+MODULE_AUTHOR("ittou.ogami");
 MODULE_LICENSE("GPL");
 
 int vdma_h_res = 640;
@@ -49,6 +50,7 @@ static int zynq_v4l2_open(struct inode *inode, struct file *filp)
 	minor = iminor(inode);
 	dp = &sp->dev[minor];
 	filp->private_data = dp;
+	printk("opne ok!!!\n");
 
 	return 0;
 }
@@ -133,7 +135,7 @@ static unsigned int zynq_v4l2_poll(struct file *filp, struct poll_table_struct *
 	return rc;
 }
 
-static int zynq_v4l2_vma_fault(struct vm_fault *vmf)
+static vm_fault_t zynq_v4l2_vma_fault(struct vm_fault *vmf)
 {
 	struct page *page;
 	unsigned long offset = vmf->pgoff << PAGE_SHIFT;
@@ -326,7 +328,7 @@ static void zynq_v4l2_free_data_all(struct zynq_v4l2_sys_data *sp)
 		flush_workqueue(sp->wq);
 		destroy_workqueue(sp->wq);
 	}
-	kfree(sp);
+	vfree(sp);
 }
 
 static int zynq_v4l2_probe(struct platform_device *pdev)

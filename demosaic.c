@@ -4,17 +4,18 @@
 #ifdef __linux__
 #undef __linux__
 #endif
-#include "xdemosaic_root.h"
+#include "xv_demosaic.h"
 #include "zynq_v4l2.h"
 
-#define DEMOSAIC_BASEADDR(num)  XPAR_DEMOSAIC_ROOT_ ## num ## _S_AXI_BUS_AXI4LS_BASEADDR
-#define DEMOSAIC_HIGHADDR(num)  XPAR_DEMOSAIC_ROOT_ ## num ## _S_AXI_BUS_AXI4LS_HIGHADDR
-#define DEMOSAIC_DEVICE_ID(num) XPAR_DEMOSAIC_ROOT_ ## num ## _DEVICE_ID
+#define DEMOSAIC_BASEADDR(num)  XPAR_V_DEMOSAIC_ ## num ## _S_AXI_CTRL_BASEADDR
+#define DEMOSAIC_HIGHADDR(num)  XPAR_V_DEMOSAIC_ ## num ## _S_AXI_CTRL_HIGHADDR
+#define DEMOSAIC_DEVICE_ID(num) XPAR_V_DEMOSAIC_ ## num ## _DEVICE_ID
+extern int vdma_h_res, vdma_v_res;
 
 int zynq_v4l2_demosaic_init(void)
 {
 	int minor;
-	XDemosaic_root ins;
+	XV_demosaic ins;
 	void __iomem *mem;
 	XStatus Status;
 	uint32_t baseaddr[MINOR_NUM] = {DEMOSAIC_BASEADDR(0)};
@@ -30,17 +31,20 @@ int zynq_v4l2_demosaic_init(void)
 			return -ENOMEM;
 		}
 
-		Status = XDemosaic_root_Initialize(&ins, device_id[minor]);
+		Status = XV_demosaic_Initialize(&ins, device_id[minor]);
 		if (Status != XST_SUCCESS) {
 			printk(KERN_ERR "XDemosaic_root_Initialize failed %d\n", minor);
 			iounmap(mem);
 			return -ENODEV;
 		}
 
-		ins.Bus_axi4ls_BaseAddress = (UINTPTR)mem;
-		XDemosaic_root_EnableAutoRestart(&ins);
-		XDemosaic_root_Start(&ins);
-		iounmap(mem);
+		ins.Config.BaseAddress = (UINTPTR)mem;
+		XV_demosaic_Set_HwReg_width(&ins,vdma_h_res);
+		XV_demosaic_Set_HwReg_height(&ins,vdma_v_res);
+		XV_demosaic_Set_HwReg_bayer_phase(&ins,0x0002);
+		XV_demosaic_EnableAutoRestart(&ins);
+		XV_demosaic_Start(&ins);
+		 iounmap(mem);
 	}
 
 	return 0;
