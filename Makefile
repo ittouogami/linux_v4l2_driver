@@ -24,7 +24,7 @@ obj-m += v4l2.o
 v4l2-objs := $(CFILES:.c=.o)
 ccflags-y += -I$(PWD)/dummy -I../$(XLNX_VDMA_DIR) -I../$(XLNX_DEMOSAIC_DIR) -I../$(XLNX_MIPI_DIR) -I../$(XLNX_HDR_DIR)
 
-all:
+all: modify_demosaic
 	make -C $(KERNEL_SRC_DIR) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) M=$(PWD) modules
 
 modify_demosaic:
